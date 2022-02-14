@@ -2,7 +2,7 @@
 
  This is the code of establishing AlphaNet.
  
- There are three folders in the project:
+ There are Five folders in the project:
 
 - **Reference paper**: The original paper and relevant references are in it.
 - **Code**: The final code which contains no bugs.
