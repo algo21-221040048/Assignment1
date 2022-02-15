@@ -123,7 +123,7 @@ def get_original_data(start_date: str, end_date: str, url=f'http://{host}:{port}
     df = df.reset_index()
     if 'index' in df.columns:
         df = df.drop(['index'], axis='columns')
-    # df.dropna(how='any', inplace=True)
+    df.dropna(how='any', inplace=True)
     return df
 
 
@@ -133,20 +133,6 @@ def get_filter_data(start_date: str, end_date: str, url=f'http://{host}:{port}/t
     params['start_date'] = start_date
     params['end_date'] = end_date
     params['fields'] = 'trading_date,wind_code,is_st,trade_status,susp_days,susp_reason,max_up_or_down'
-    df = get_data(params=params, url=url)
-    df.sort_values(by='trading_date', inplace=True)
-    df = df.reset_index()
-    if 'index' in df.columns:
-        df = df.drop(['index'], axis='columns')
-    return df
-
-
-def get_return_data(start_date: str, end_date: str, url=f'http://{host}:{port}/tqmain/equity_daily', wind_code=None) -> pd.DataFrame:
-    params = {}
-    params['wind_code'] = wind_code
-    params['start_date'] = start_date
-    params['end_date'] = end_date
-    params['fields'] = 'trading_date,wind_code,close_price,adj_factor'
     df = get_data(params=params, url=url)
     df.sort_values(by='trading_date', inplace=True)
     df = df.reset_index()
@@ -171,14 +157,11 @@ if __name__ == '__main__':
     get_original_data(trading_list[0], trading_list[-1]).to_csv("x_data_without_return1.csv", header=True, index=True)
     print("Finish!")
 
-    get_filter_data(trading_list[0], trading_list[-1]).to_csv("filter_data.csv", header=True, index=True)
-    print("Finish!")
+    # get_filter_data(trading_list[0], trading_list[-1]).to_csv("filter_data.csv", header=True, index=True)
+    # print("Finish!")
 
-    get_return_data(trading_list[0], trading_list[-1]).to_csv("x_y_calculateReturn_data.csv", header=True, index=True)
-    print("Finish!")
-
-    get_delist_data().to_csv("delist_data.csv", header=True, index=True)
-    print("Finish!")
+    # get_delist_data().to_csv("delist_data.csv", header=True, index=True)
+    # print("Finish!")
 
 
 
