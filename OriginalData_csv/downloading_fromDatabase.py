@@ -123,7 +123,7 @@ def get_original_data(start_date: str, end_date: str, url=f'http://{host}:{port}
     df = df.reset_index()
     if 'index' in df.columns:
         df = df.drop(['index'], axis='columns')
-    df.dropna(how='any', inplace=True)
+    # df.dropna(how='any', inplace=True)  # There is no need to drop NaN right here
     return df
 
 
@@ -157,11 +157,11 @@ if __name__ == '__main__':
     get_original_data(trading_list[0], trading_list[-1]).to_csv("x_data_without_return1.csv", header=True, index=True)
     print("Finish!")
 
-    # get_filter_data(trading_list[0], trading_list[-1]).to_csv("filter_data.csv", header=True, index=True)
-    # print("Finish!")
+    get_filter_data(trading_list[0], trading_list[-1]).to_csv("filter_data.csv", header=True, index=True)
+    print("Finish!")
 
-    # get_delist_data().to_csv("delist_data.csv", header=True, index=True)
-    # print("Finish!")
+    get_delist_data().to_csv("delist_data.csv", header=True, index=True)
+    print("Finish!")
 
 
 

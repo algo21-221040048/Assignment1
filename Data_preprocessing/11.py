@@ -38,19 +38,6 @@ def read():
     return trading_list, data, filter_medium, data_with_return1, y, data_y, delist
 
 
-def calculate_return1(wind_code):
-    df = data[data['wind_code'] == wind_code]
-    df_new = df.copy()  # returning a view versus a copy
-    df_new['close_adj'] = df_new.apply(lambda x: x['close_price'] * x['adj_factor'], axis=1).copy()
-    df_new['return1'] = df_new['close_adj'].pct_change()
-    df_new = df_new.drop(['close_adj', 'adj_factor'], axis='columns')
-    return df_new
-    # stock_code = data['wind_code'].unique().tolist()
-    # data_with_return1 = pd.concat([calculate_return1(each) for each in stock_code], axis=0, ignore_index=False)
-    # data_with_return1.sort_values(by='trading_date', inplace=True)
-    # assert data_with_return1.shape == data.shape
-    # data_with_return1.to_csv("data_with_return1.csv", header=True, index=True)
-    # print("Finish!")
 
 
 def calculate_return5(wind_code):
@@ -176,7 +163,7 @@ if __name__ == '__main__':
     trade_status_no_data = (filter_data[filter_data['trade_status'].isnull()])['wind_code'].unique().tolist()  # no data
 
     # these are PT
-    stock_delist_date = de_list[de_list['delist_date'] != '1899-12-30']
+    stock_delist_date = de_list[de_list['deplist_date'] != '1899-12-30']
     stock_delist_date = stock_delist_date[(stock_delist_date['delist_date'] <= '2020-05-29') & (stock_delist_date['delist_date'] >= '2011-01-31')]
     stock_delist_list = stock_delist_date['wind_code'].unique().tolist()
 
