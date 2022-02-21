@@ -95,10 +95,6 @@ def processing(x: pd.DataFrame) -> pd.DataFrame:
     return x
 
 
-def split_and_judging(x: pd.DataFrame) -> pd.DataFrame:
-    pass
-
-
 if __name__ == '__main__':
     trading_list, x_data_without_return1, filter_data, delist_data = read()
     data = pd.merge(x_data_without_return1.reset_index(), filter_data.reset_index(), how='left', on=['trading_date', 'wind_code'])
@@ -155,6 +151,7 @@ if __name__ == '__main__':
                 truncate_index = np.unique(np.where(split_sub_df_y == -1000)[0])
                 split_sub_df_x = np.delete(split_sub_df_x, truncate_index, 0)
                 split_sub_df_y = np.delete(split_sub_df_y, truncate_index, 0)
+
                 data_x = torch.cat((data_x.double(), split_sub_df_x), 0)
                 data_y = torch.cat((data_y.double(), split_sub_df_y), 0)
 
