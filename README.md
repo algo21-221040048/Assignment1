@@ -13,4 +13,3 @@
 This project is still revising every workday.
 
 #### Thanks for your attention!
-#### My email: [xuanli1@link.cuhk.edu.cn]()
