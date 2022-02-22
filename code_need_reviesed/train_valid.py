@@ -55,7 +55,7 @@ def read_data():
     print("y数据的大小为：{}".format(data_numpy_y.shape))
 
     x_train, x_test, y_train, y_test = train_test_split(data_numpy_x, data_numpy_y, train_size=0.5, shuffle=False)
-    # x_train, x_test, y_train, y_test = map(torch.tensor, (x_train, x_test, y_train, y_test))
+    x_train, x_test, y_train, y_test = map(torch.tensor, (x_train, x_test, y_train, y_test))
     return x_train, x_test, y_train, y_test
 
 

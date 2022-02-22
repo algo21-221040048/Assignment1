@@ -117,12 +117,12 @@ def ts_return_single(x, kernel_length, stride_length):
     assert kernel_length == stride_length
     assert len(x.size()) == 4
     # assert x.dtype == torch.float64
-    medium = f.unfold(x.float(), kernel_size=(1, 2 * kernel_length), stride=(1, stride_length))
+    medium = f.unfold(x.float(), kernel_size=(1, kernel_length), stride=(1, stride_length))
     B, W, L = medium.size()
     medium = medium.permute(0, 2, 1)
     medium = medium.squeeze(0)
     result = torch.cat(
-        [get_return(medium[i][:kernel_length], medium[i][kernel_length:]).unsqueeze(0).unsqueeze(0) for i in
+        [get_return(medium[i][0], medium[i][-1]).unsqueeze(0).unsqueeze(0) for i in
          range(medium.size()[0])], 0)
     assert result.size()[0] == medium.size()[0]
     return result

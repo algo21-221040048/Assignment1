@@ -1,4 +1,6 @@
 # This part is establishing AlphaNet-v1 model with self defined layers
+# Input: torch.Size([1000, 1, 9, 30])
+# Output: torch.Size([1000])
 from torch import nn
 from self_defined_layers import *
 
@@ -29,7 +31,7 @@ class AlphaNet_v1(nn.Module):
         self.ts_max = Lambda(ts_max)
         self.ts_min = Lambda(ts_min)
         self.Flatten = nn.Flatten(1, 3)
-        self.linear1 = nn.Linear(990, 30)
+        self.linear1 = nn.Linear(702, 30)
         self.linear2 = nn.Linear(30, 1)
         self.dropout = nn.Dropout(p=0.5)
         self.weights = nn.Parameter(torch.randn(1), requires_grad=True)
@@ -42,25 +44,19 @@ class AlphaNet_v1(nn.Module):
         xb_2 = self.BN(self.ts_cov(xb))  # N, 1, 36, 3
         xb_3 = self.BN(self.ts_stddev(xb))  # N, 1, 9, 3
         xb_4 = self.BN(self.ts_zscore(xb))  # N, 1, 9, 3
-        xb_5 = self.BN(self.ts_return(xb))  # N, 1, 9, 20
+        xb_5 = self.BN(self.ts_return(xb))  # N, 1, 9, 3
         xb_6 = self.BN(self.ts_decaylinear(xb))  # N, 1, 9, 3
         xb_7 = self.BN(self.ts_mean_extract(xb))  # N, 1, 9, 3
 
         # pool layer
-        xb_p1 = torch.cat([xb_1, xb_2, xb_3, xb_4, xb_6, xb_7], 2)  # N, 1, 108, 3
-        xb_p2 = xb_5  # N, 1, 9, 20
-        xb_8_p1 = self.BN(self.ts_mean_pool(xb_p1))  # N, 1, 108, 1
-        xb_8_p2 = self.BN(self.ts_mean_pool(xb_p2))  # N, 1, 9, 6
-        xb_9_p1 = self.BN(self.ts_max(xb_p1))  # N, 1, 108, 1
-        xb_9_p2 = self.BN(self.ts_max(xb_p2))  # N, 1, 9, 6
-        xb_10_p1 = self.BN(self.ts_min(xb_p1))  # N, 1, 108, 1
-        xb_10_p2 = self.BN(self.ts_min(xb_p2))  # N, 1, 9, 6
+        xb = torch.cat([xb_1, xb_2, xb_3, xb_4, xb_5, xb_6, xb_7], 2)  # N, 1, 117, 3
+        xb_8 = self.BN(self.ts_mean_pool(xb))  # N, 1, 117, 1
+        xb_9 = self.BN(self.ts_max(xb))  # N, 1, 117, 1
+        xb_10 = self.BN(self.ts_min(xb))  # N, 1, 117, 1
 
         # flatten layer
-        xb = torch.cat([self.Flatten(xb_p1), self.Flatten(xb_p2),
-                        self.Flatten(xb_8_p1), self.Flatten(xb_8_p2),
-                        self.Flatten(xb_9_p1), self.Flatten(xb_9_p2),
-                        self.Flatten(xb_10_p1), self.Flatten(xb_10_p2)], 1)  # N, 990
+        xb = torch.cat([self.Flatten(xb), self.Flatten(xb_8),
+                        self.Flatten(xb_9), self.Flatten(xb_10)], 1)  # N, 702
 
         # fully connected layer & hidden layer
         xb = self.linear1(xb)  # N, 30 ; linear1: 2 learnable parameters
