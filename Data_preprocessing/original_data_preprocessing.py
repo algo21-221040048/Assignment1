@@ -78,6 +78,9 @@ def data_fillingNa(df: pd.DataFrame) -> pd.DataFrame:
     medium = df[['wind_code', 'open_price', 'high_price', 'low_price', 'close_price', 'vwap']]
     medium = medium.groupby('wind_code').fillna(method='ffill', axis=0)
     return df.fillna(medium)
+    # data = data_fillingNa(data)  # This step isn't necessary
+    # # Test if the fillNaN method is reasonable
+    # # data[data['wind_code'] == "000001.SZ"].to_csv("000001.SZ.fill.csv", header=True, index=True)
 
 
 # This function is used to handle special case: '停牌一天'
@@ -99,17 +102,12 @@ if __name__ == '__main__':
     trading_list, x_data_without_return1, filter_data, delist_data = read()
     data = pd.merge(x_data_without_return1.reset_index(), filter_data.reset_index(), how='left', on=['trading_date', 'wind_code'])
 
-    # data = data_fillingNa(data)  # This step isn't necessary
-    # # Test if the fillNaN method is reasonable
-    # # data[data['wind_code'] == "000001.SZ"].to_csv("000001.SZ.fill.csv", header=True, index=True)
-
     # Data preparing
     data = data_cleaning(data, delist_data)
     data = sp_handle(data)
     data = calculate_return1(data)
     data = calculate_return_bn(data)
     data = data.groupby('wind_code').apply(lambda x: processing(x))
-    # data = data.drop(['wind_code'], axis='columns')
 
     train_start_list = trading_list[:-1500:TRAIN_UPDATE_DAYS]
     train_end_list = []
@@ -154,6 +152,8 @@ if __name__ == '__main__':
 
                 data_x = torch.cat((data_x.double(), split_sub_df_x), 0)
                 data_y = torch.cat((data_y.double(), split_sub_df_y), 0)
+                # print(data_x.shape)
+                # print(data_y.shape)
 
         open(PATH_X, 'wb').write(gzip.compress(pickle.dumps(data_x)))
         open(PATH_Y, 'wb').write(gzip.compress(pickle.dumps(data_y)))
