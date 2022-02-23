@@ -136,7 +136,14 @@ def ts_return(x, kernel_length=KERNEL_LENGTH_EXTRACT_LAYER, stride_length=STRIDE
 
 
 def get_return(X, Y):
-    return (Y - X)/X - 1
+    if X != 0 and Y != 0:
+        return (Y - X) / X - 1
+    elif X == 0 and Y != 0:
+        return (Y - 0.0001) / 0.0001 - 1
+    elif X != 0 and Y == 0:
+        return (0.0001 - X) / X - 1
+    else:
+        return (Y - X) / 1 - 1
 
 
 def ts_decaylinear_single(x, kernel_length, stride_length):
