@@ -2,3 +2,9 @@
 * text=auto
 x_data_without_return1.csv.zip filter=lfs diff=lfs merge=lfs -text
 Data_preprocessing/data_x_part_1.pkl.gz filter=lfs diff=lfs merge=lfs -text
+Data_preprocessing/data_x_part_2.pkl.gz filter=lfs diff=lfs merge=lfs -text
+Data_preprocessing/data_x_part_3.pkl.gz filter=lfs diff=lfs merge=lfs -text
+Data_preprocessing/data_x_part_4.pkl.gz filter=lfs diff=lfs merge=lfs -text
+Data_preprocessing/data_x_part_5.pkl.gz filter=lfs diff=lfs merge=lfs -text
+Data_preprocessing/data_x_part_6.pkl.gz filter=lfs diff=lfs merge=lfs -text
+Data_preprocessing/data_x_part_7.pkl.gz filter=lfs diff=lfs merge=lfs -text
