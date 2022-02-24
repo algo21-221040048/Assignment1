@@ -84,7 +84,8 @@ def fit(epochs: int, model: AlphaNet_v1, loss_func: torch.nn.MSELoss, opt: torch
         model.eval()
         with torch.no_grad():
             losses, nums = zip(*[loss_batch(model, loss_func, xb, yb) for xb, yb in valid_dl])
-            valid_losses += losses
+            for each in losses:
+                valid_losses.append(each)
 
         valid_loss = np.sum(np.multiply(losses, nums)) / np.sum(nums)
         avg_valid_losses.append((epoch+1, valid_loss))

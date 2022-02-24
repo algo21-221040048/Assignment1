@@ -153,9 +153,11 @@ def ts_decaylinear_single(x, kernel_length, stride_length):
     B, W, L = medium.size()
     medium = medium.permute(0, 2, 1)
     medium = medium.squeeze(0)
+    dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     result = torch.cat(
-        [torch.from_numpy(np.average(medium[i], weights=range(1, kernel_length+1, 1)).reshape(-1)).unsqueeze(0) for i in
+        [(torch.sum(torch.mul(medium[i], torch.arange(1, kernel_length+1, 1).to(dev))) / torch.sum(torch.arange(1, kernel_length+1, 1).to(dev))).reshape(-1).unsqueeze(0) for i in
          range(medium.size()[0])], 0)
+    # torch.from_numpy(np.average(medium[i], weights=range(1, kernel_length + 1, 1)).reshape(-1)).unsqueeze(0)
     assert result.size()[0] == medium.size()[0]
     return result.float()
 
