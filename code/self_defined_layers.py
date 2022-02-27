@@ -1,6 +1,5 @@
 # This part is relevant with table 7 in this paper
 import torch
-import numpy as np
 import torch.nn.functional as f
 from audtorch.metrics.functional import pearsonr
 

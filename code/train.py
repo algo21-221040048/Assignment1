@@ -7,15 +7,33 @@ from torch import optim
 from pytorchtools import EarlyStopping
 from model import *
 import pickle
+import numpy as np
 import gzip
 
 
 # Hyper parameters
 EPOCHS = 10
 LR = 0.0001
-PATIENCE = 10
+PATIENCE = 5
 BATCH_SIZE = 1000
 TRAIN_SIZE = 0.5
+DATA_NUM = 7
+
+
+# This class is used to preprocess each batch
+class WrappedDataLoader:
+    def __init__(self, dl, func, dev):
+        self.dl = dl
+        self.func = func
+        self.dev = dev
+
+    def __len__(self):
+        return len(self.dl)
+
+    def __iter__(self):
+        batches = iter(self.dl)
+        for b in batches:
+            yield self.func(*b, self.dev)
 
 
 # This function is used to read and split the particular data
@@ -62,13 +80,14 @@ def loss_batch(model: AlphaNet_v1, loss_func: torch.nn.MSELoss, xb: torch.tensor
 
 
 #  This function is used to train the model and make the validation
-def fit(epochs: int, model: AlphaNet_v1, loss_func: torch.nn.MSELoss, opt: torch.optim.RMSprop, train_dl: torch.utils.data.DataLoader, valid_dl: torch.utils.data.DataLoader, train_ds: torch.utils.data.Dataset, patience: int):
+def fit(part_num: int, epochs: int, model: AlphaNet_v1, loss_func: torch.nn.MSELoss, opt: torch.optim.RMSprop, train_dl: WrappedDataLoader, valid_dl: WrappedDataLoader, train_ds: torch.utils.data.Dataset, patience: int):
     train_losses = []
     valid_losses = []
     avg_train_losses = []
     avg_valid_losses = []
 
-    early_stopping = EarlyStopping(patience=patience, verbose=True)
+    path = 'model_checkpoint_in_part_{}.pt'.format(part_num)
+    early_stopping = EarlyStopping(patience=patience, verbose=True, path=path)
 
     for epoch in range(epochs):
         model.train()
@@ -84,8 +103,8 @@ def fit(epochs: int, model: AlphaNet_v1, loss_func: torch.nn.MSELoss, opt: torch
         model.eval()
         with torch.no_grad():
             losses, nums = zip(*[loss_batch(model, loss_func, xb, yb) for xb, yb in valid_dl])
-            for each in losses:
-                valid_losses.append(each)
+            for l in losses:
+                valid_losses.append(l)
 
         valid_loss = np.sum(np.multiply(losses, nums)) / np.sum(nums)
         avg_valid_losses.append((epoch+1, valid_loss))
@@ -95,24 +114,11 @@ def fit(epochs: int, model: AlphaNet_v1, loss_func: torch.nn.MSELoss, opt: torch
             print("Early stopping")
             break
 
-    model.load_state_dict(torch.load('checkpoint.pt'))
+    model.load_state_dict(torch.load(path))
+    print("滚动训练第{}部分训练结束的模型参数为：".format(part_num))
+    for name, each in model.named_parameters():
+        print(name, each, each.shape, each.requires_grad)
     return train_losses, valid_losses, avg_valid_losses
-
-
-# This class is used to preprocess each batch
-class WrappedDataLoader:
-    def __init__(self, dl, func, dev):
-        self.dl = dl
-        self.func = func
-        self.dev = dev
-
-    def __len__(self):
-        return len(self.dl)
-
-    def __iter__(self):
-        batches = iter(self.dl)
-        for b in batches:
-            yield self.func(*b, self.dev)
 
 
 # This is the main function
@@ -124,21 +130,19 @@ def main(part_num: int):
     train_data_dataset = TensorDataset(x_train, y_train)
     valid_data_dataset = TensorDataset(x_valid, y_valid)
     train_data_dataloader, valid_data_dataloader = get_data(train_data_dataset, valid_data_dataset, BATCH_SIZE)
-    model, opt, device = get_model()
-    model.to(device)
-    loss_func = torch.nn.MSELoss(reduction='sum')
     train_data_dataloader = WrappedDataLoader(train_data_dataloader, preprocess, device)
     valid_data_dataloader = WrappedDataLoader(valid_data_dataloader, preprocess, device)
-    print("\ntrain数据集有{}个数据，每个数据的大小为{}和{};valid数据集有{}个数据，每个数据的大小为{}和{}".format(
+    print("\n第{}部分train数据集有{}个数据，每个数据的大小为{}和{};valid数据集有{}个数据，每个数据的大小为{}和{}".format(
+        part_num,
         len(train_data_dataset),
         train_data_dataset.__getitem__(0)[0].unsqueeze(0).shape,
         train_data_dataset.__getitem__(0)[1].unsqueeze(0).shape,
         len(valid_data_dataset),
         valid_data_dataset.__getitem__(0)[0].unsqueeze(0).shape,
         valid_data_dataset.__getitem__(0)[1].unsqueeze(0).shape))
-    print("训练集分组数为{}, 验证级分组数为{}".format(len(train_data_dataloader), len(valid_data_dataloader)))
+    print("第{}部分训练集分组数为{}, 验证级分组数为{}".format(part_num, len(train_data_dataloader), len(valid_data_dataloader)))
 
-    train_losses, valid_losses, avg_valid_losses = fit(EPOCHS, model, loss_func, opt, train_data_dataloader,
+    train_losses, valid_losses, avg_valid_losses = fit(part_num, EPOCHS, model, loss_func, opt, train_data_dataloader,
                                                        valid_data_dataloader, train_data_dataset, PATIENCE)
     open(PATH_train_losses, 'wb').write(gzip.compress(pickle.dumps(train_losses)))
     open(PATH_valid_losses, 'wb').write(gzip.compress(pickle.dumps(valid_losses)))
@@ -146,5 +150,19 @@ def main(part_num: int):
 
 
 if __name__ == '__main__':
-    for i in range(1, 8):
-        main(i)
+    model, opt, device = get_model()
+    model.to(device)
+    loss_func = torch.nn.MSELoss(reduction='sum')
+    print("未训练的模型参数为：")
+    for name, each in model.named_parameters():
+        print(name, each, each.shape, each.requires_grad)
+    for data_num in range(1, DATA_NUM + 1):
+        print("Viewing data_x_part_{}.pkl.gz and data_y_part_{}.pkl.gz".format(data_num, data_num))
+        print("滚动训练第{}部分训练开始的模型参数为：".format(data_num))
+        for name, each in model.named_parameters():
+            print(name, each, each.shape, each.requires_grad)
+        main(data_num)
+
+
+
+
