@@ -1,6 +1,7 @@
 # This part is establishing AlphaNet-v1 model with self defined layers
 # Input: torch.Size([1000, 1, 9, 30])
 # Output: torch.Size([1000])
+import torch
 from torch import nn
 from self_defined_layers import *
 
@@ -17,6 +18,16 @@ class Lambda(nn.Module):
 
 # Model
 class AlphaNet_v1(nn.Module):
+    def truncated_normal_(self, tensor, mean=0, std=0.09):
+        with torch.no_grad():
+            size = tensor.shape
+            tmp = tensor.new_empty(size + (4,)).normal_()
+            valid = (tmp < 2) & (tmp > -2)
+            ind = valid.max(-1, keepdim=True)[1]
+            tensor.data.copy_(tmp.gather(-1, ind).squeeze(-1))
+            tensor.data.mul_(std).add_(mean)
+            return tensor
+
     def __init__(self):
         super().__init__()
         self.ts_corr = Lambda(ts_corr)
@@ -32,10 +43,16 @@ class AlphaNet_v1(nn.Module):
         self.ts_min = Lambda(ts_min)
         self.Flatten = nn.Flatten(1, 3)
         self.linear1 = nn.Linear(702, 30)
+        self.linear1.weight = self.truncated_normal_(nn.Parameter(torch.empty(30, 702), requires_grad=True))
+        self.linear1.bias = self.truncated_normal_(nn.Parameter(torch.empty(30), requires_grad=True))
         self.linear2 = nn.Linear(30, 1)
+        self.linear2.weight = self.truncated_normal_(nn.Parameter(torch.empty(1, 30), requires_grad=True))
+        self.linear2.bias = self.truncated_normal_(nn.Parameter(torch.empty(1), requires_grad=True))
         self.dropout = nn.Dropout(p=0.5)
-        self.weights = nn.Parameter(torch.randn(1), requires_grad=True)
-        self.bias = nn.Parameter(torch.zeros(1), requires_grad=True)
+        self.weights = self.truncated_normal_(nn.Parameter(torch.empty(1), requires_grad=True))
+        self.bias = self.truncated_normal_(nn.Parameter(torch.empty(1), requires_grad=True))
+        # self.weights = nn.Parameter(torch.randn(1), requires_grad=True)
+        # self.bias = nn.Parameter(torch.zeros(1), requires_grad=True)
 
     def forward(self, xb):
         # extract layer
